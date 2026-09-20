@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cli-cheatsheet",
+  "compatibility_date": "2026-04-27",
+  "build": {
+    "command": "npm run build"
+  },
+  "assets": {
+    "directory": "dist"
+  },
+  "observability": { "enabled": true },
+  "routes": [
+    { "pattern": "cli.kaf.sh", "custom_domain": true }
+  ]
+}

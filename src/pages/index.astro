@@ -1,0 +1,405 @@
+---
+import '../styles/global.css';
+import { Code } from 'astro:components';
+
+const tools = [
+  {
+    name: 'zoxide',
+    tagline: 'smarter cd powered by frecency',
+    docs: 'https://github.com/ajeetdsouza/zoxide',
+    sections: [
+      {
+        title: 'What it does',
+        items: [
+          'Tracks directories you visit and jumps to them by ranked match.',
+          'Replaces repetitive cd paths with short fuzzy queries.'
+        ]
+      },
+      {
+        title: 'Common commands',
+        code: [
+          'z foo                # jump to the best match for foo',
+          'zi foo               # interactive selection with fzf if available',
+          'z foo bar            # match multiple path fragments',
+          'z -                  # jump back',
+          'zoxide query foo     # print the matched directory',
+          'zoxide add ~/code    # add a directory manually',
+          'zoxide remove ~/tmp  # remove a directory from the database'
+        ]
+      },
+      {
+        title: 'Useful shell patterns',
+        code: [
+          'cd "$(zoxide query projects)"',
+          'alias j="z"',
+          'zoxide query -i      # interactive picker over ranked matches'
+        ]
+      }
+    ]
+  },
+  {
+    name: 'fd',
+    tagline: 'sane, fast find',
+    docs: 'https://github.com/sharkdp/fd',
+    sections: [
+      {
+        title: 'What it does',
+        items: [
+          'Finds files and directories with sensible defaults.',
+          'Ignores .gitignore patterns and hidden files unless you ask otherwise.'
+        ]
+      },
+      {
+        title: 'Common commands',
+        code: [
+          'fd config            # find files or dirs matching config',
+          'fd -t f package      # files only',
+          'fd -t d src          # directories only',
+          'fd -e ts             # files with extension ts',
+          'fd -H env            # include hidden files',
+          'fd -I node_modules   # do not respect ignore files',
+          'fd . ~/code/sites    # list everything under a path'
+        ]
+      },
+      {
+        title: 'Act on results',
+        code: [
+          'fd -e log -X rm      # pass all matches to one command',
+          'fd -e jpg -x convert {} {.}.png',
+          'fd -e md -X wc -l',
+          'fd -e rs -x bat {}'
+        ]
+      }
+    ]
+  },
+  {
+    name: 'fzf',
+    tagline: 'fuzzy finder for everything',
+    docs: 'https://github.com/junegunn/fzf',
+    sections: [
+      {
+        title: 'What it does',
+        items: [
+          'Lets you interactively narrow a list using fuzzy matching.',
+          'Works best when piped from other commands.'
+        ]
+      },
+      {
+        title: 'Common commands',
+        code: [
+          'fd | fzf                        # pick a file from fd output',
+          'history | fzf                  # search shell history',
+          'git branch --all | fzf         # select a branch',
+          'ps -ef | fzf                   # find a process',
+          'fzf --preview "bat --color=always {}"',
+          'fzf --multi                    # select multiple items',
+          'fzf --exact                    # disable fuzzy matching'
+        ]
+      },
+      {
+        title: 'Useful patterns',
+        code: [
+          'export FZF_DEFAULT_COMMAND="fd --type f"',
+          'vim "$(fd -t f | fzf)"',
+          'cd "$(fd -t d | fzf)"',
+          'git checkout "$(git branch --format="%(refname:short)" | fzf)"'
+        ]
+      }
+    ]
+  },
+  {
+    name: 'rg',
+    tagline: 'ripgrep for fast text search',
+    docs: 'https://github.com/BurntSushi/ripgrep',
+    sections: [
+      {
+        title: 'What it does',
+        items: [
+          'Searches file contents recursively with excellent defaults.',
+          'Respects .gitignore and skips binary files by default.'
+        ]
+      },
+      {
+        title: 'Common commands',
+        code: [
+          'rg TODO                      # search recursively for TODO',
+          'rg -n "function main"       # include line numbers',
+          'rg -t ts "useEffect"        # limit to TypeScript files',
+          'rg -g "*.astro" title       # glob filter',
+          'rg -i kaf                    # case-insensitive',
+          'rg -C 2 error                # include context lines',
+          'rg --files                   # list searchable files only'
+        ]
+      },
+      {
+        title: 'Useful patterns',
+        code: [
+          'rg --files | fzf             # pick a project file',
+          'rg -l "TODO"                # print matching filenames only',
+          'rg "pattern" ~/code/sites',
+          'rg -g "!dist" -g "!node_modules" foo'
+        ]
+      }
+    ]
+  },
+  {
+    name: 'jq',
+    tagline: 'JSON parser, formatter, and transformer',
+    docs: 'https://jqlang.org',
+    sections: [
+      {
+        title: 'What it does',
+        items: [
+          'Slices, transforms, and pretty-prints JSON.',
+          'Essential for APIs, CLI output, and structured logs.'
+        ]
+      },
+      {
+        title: 'Common commands',
+        code: [
+          'jq . data.json                         # pretty-print JSON',
+          'jq -r .name package.json               # raw string output',
+          'jq .items[].id response.json           # iterate array field',
+          'jq ".users[] | {id, email}" users.json',
+          'curl ... | jq .                        # format API output',
+          'jq "keys" file.json                   # list top-level keys',
+          'jq "map(select(.active))" data.json   # filter arrays'
+        ]
+      },
+      {
+        title: 'Useful patterns',
+        code: [
+          'jq -r ".items[] | [.id, .name] | @tsv" data.json',
+          'jq ".count += 1" state.json',
+          'jq -s "." part1.json part2.json',
+          'gh api user | jq {login, name, public_repos}'
+        ]
+      }
+    ]
+  }
+];
+
+const toolClasses: Record<string, { border: string; dot: string; text: string }> = {
+  zoxide: { border: 'border-l-amber-400', dot: 'bg-amber-400', text: 'text-amber-400' },
+  fd:     { border: 'border-l-sky-400',    dot: 'bg-sky-400',    text: 'text-sky-400' },
+  fzf:    { border: 'border-l-emerald-400', dot: 'bg-emerald-400', text: 'text-emerald-400' },
+  rg:     { border: 'border-l-rose-400',   dot: 'bg-rose-400',   text: 'text-rose-400' },
+  jq:     { border: 'border-l-violet-400', dot: 'bg-violet-400', text: 'text-violet-400' },
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="A quick reference cheatsheet for essential CLI tools: zoxide, fd, fzf, ripgrep, and jq. Copy-paste ready commands and common patterns." />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href="https://cli.kaf.sh/" />
+
+    <meta property="og:title" content="CLI Cheatsheet" />
+    <meta property="og:description" content="A quick reference cheatsheet for essential CLI tools: zoxide, fd, fzf, ripgrep, and jq." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://cli.kaf.sh/" />
+    <meta property="og:image" content="https://cli.kaf.sh/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="CLI Cheatsheet — zoxide, fd, fzf, rg, jq" />
+    <meta property="og:site_name" content="CLI Cheatsheet" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CLI Cheatsheet" />
+    <meta name="twitter:description" content="A quick reference cheatsheet for essential CLI tools: zoxide, fd, fzf, ripgrep, and jq." />
+    <meta name="twitter:image" content="https://cli.kaf.sh/og-image.png" />
+
+    <title>CLI Cheatsheet</title>
+  </head>
+  <body class="min-h-screen bg-stone-950 text-stone-300 antialiased bg-noise selection:bg-stone-700 selection:text-stone-100">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 gap-12 lg:grid-cols-[260px_1fr]">
+        <!-- Sidebar -->
+        <aside class="lg:sticky lg:top-8 lg:self-start">
+          <div class="mb-8">
+            <h1 class="font-serif text-4xl font-bold text-stone-100 tracking-tight">CLI Cheatsheet</h1>
+            <p class="mt-2 text-stone-400 leading-relaxed">A styled reference for zoxide, fd, fzf, rg, and jq.</p>
+          </div>
+
+          <nav aria-label="Table of contents" class="space-y-1">
+            {tools.map((tool) => {
+              const tc = toolClasses[tool.name];
+              return (
+                <a
+                  href={`#${tool.name}`}
+                  class="nav-link group flex items-center rounded-md px-3 py-2 text-sm font-medium text-stone-400 transition-colors hover:bg-stone-900 hover:text-stone-200"
+                  data-tool={tool.name}
+                >
+                  <span class={`mr-3 h-2 w-2 rounded-full ${tc.dot}`}></span>
+                  <span class="font-mono">{tool.name}</span>
+                </a>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="space-y-16">
+          <!-- Quick Combos -->
+          <section class="rounded-xl border border-stone-800 bg-stone-900/60 p-6 sm:p-8">
+            <h2 class="font-serif text-2xl font-semibold text-stone-100 mb-4">Quick combos</h2>
+            <ul class="space-y-3">
+              <li class="flex items-start gap-3">
+                <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-stone-500 shrink-0"></span>
+                <div>
+                  <code class="rounded bg-stone-950 px-1.5 py-0.5 font-mono text-sm text-stone-300 border border-stone-800">fd -t f | fzf</code>
+                  <span class="text-stone-500 ml-2">— pick a file</span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-stone-500 shrink-0"></span>
+                <div>
+                  <code class="rounded bg-stone-950 px-1.5 py-0.5 font-mono text-sm text-stone-300 border border-stone-800">rg --files | fzf</code>
+                  <span class="text-stone-500 ml-2">— fuzzy-open tracked files</span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-stone-500 shrink-0"></span>
+                <div>
+                  <code class="rounded bg-stone-950 px-1.5 py-0.5 font-mono text-sm text-stone-300 border border-stone-800">rg pattern | fzf</code>
+                  <span class="text-stone-500 ml-2">— search then narrow</span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-stone-500 shrink-0"></span>
+                <div>
+                  <code class="rounded bg-stone-950 px-1.5 py-0.5 font-mono text-sm text-stone-300 border border-stone-800">gh api user | jq .</code>
+                  <span class="text-stone-500 ml-2">— inspect JSON cleanly</span>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-stone-500 shrink-0"></span>
+                <div>
+                  <code class="rounded bg-stone-950 px-1.5 py-0.5 font-mono text-sm text-stone-300 border border-stone-800">zoxide query -i</code>
+                  <span class="text-stone-500 ml-2">— interactively jump to a directory</span>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          {tools.map((tool) => {
+            const tc = toolClasses[tool.name];
+            return (
+              <section id={tool.name} class="scroll-mt-8">
+                <div class={`rounded-xl border border-stone-800 bg-stone-900/60 ${tc.border} border-l-4`}>
+                  <div class="p-6 sm:p-8">
+                    <header class="mb-8">
+                      <div class="flex flex-wrap items-baseline justify-between gap-4">
+                        <h2 class={`font-serif text-3xl font-bold ${tc.text}`}>{tool.name}</h2>
+                        <a
+                          href={tool.docs}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-sm text-stone-500 transition-colors hover:text-stone-300"
+                        >
+                          Documentation &rarr;
+                        </a>
+                      </div>
+                      <p class="mt-1 text-lg text-stone-400">{tool.tagline}</p>
+                    </header>
+
+                    <div class="space-y-10">
+                      {tool.sections.map((section) => (
+                        <div>
+                          <h3 class="font-serif text-xl font-semibold text-stone-200 mb-3">{section.title}</h3>
+
+                          {section.items && (
+                            <ul class="list-disc space-y-2 pl-5 text-stone-300 marker:text-stone-600">
+                              {section.items.map((item) => (
+                                <li class="leading-relaxed">{item}</li>
+                              ))}
+                            </ul>
+                          )}
+
+                          {section.code && (
+                            <div class="relative group mt-4">
+                              <div class="overflow-hidden rounded-lg border border-stone-800 bg-stone-950">
+                                <Code
+                                  code={section.code.join('\n')}
+                                  lang="bash"
+                                  theme="css-variables"
+                                  class="p-4 text-sm leading-relaxed !bg-transparent"
+                                />
+                              </div>
+                              <button
+                                class="copy-btn absolute right-3 top-3 rounded-md bg-stone-800/90 px-2.5 py-1 text-xs font-medium text-stone-400 opacity-0 backdrop-blur-sm transition-all hover:bg-stone-700 hover:text-stone-200 group-hover:opacity-100 focus:opacity-100"
+                                aria-label="Copy code to clipboard"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          })}
+        </main>
+      </div>
+
+      <footer class="mt-24 border-t border-stone-800 pt-8 text-center text-sm text-stone-500">
+        <p>
+          Domain: <a href="https://cli.kaf.sh" class="text-stone-400 transition-colors hover:text-stone-200">cli.kaf.sh</a>
+        </p>
+        <p class="mt-1">Built with Astro, Tailwind, and Shiki.</p>
+      </footer>
+    </div>
+
+    <script>
+      // Copy to clipboard
+      document.querySelectorAll('.copy-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const pre = btn.closest('.group')?.querySelector('pre');
+          if (!pre) return;
+          const text = pre.textContent || '';
+          try {
+            await navigator.clipboard.writeText(text);
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.classList.add('text-emerald-400');
+            setTimeout(() => {
+              btn.textContent = original;
+              btn.classList.remove('text-emerald-400');
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy', err);
+          }
+        });
+      });
+
+      // Active section highlighting
+      const sections = document.querySelectorAll('section[id]');
+      const links = document.querySelectorAll('.nav-link');
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.getAttribute('id');
+              links.forEach((link) => {
+                const isActive = link.getAttribute('data-tool') === id;
+                link.classList.toggle('bg-stone-900', isActive);
+                link.classList.toggle('text-stone-100', isActive);
+                link.classList.toggle('text-stone-400', !isActive);
+              });
+            }
+          });
+        },
+        { rootMargin: '-10% 0px -70% 0px' }
+      );
+
+      sections.forEach((section) => observer.observe(section));
+    </script>
+  </body>
+</html>
